@@ -1028,7 +1028,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
   #ifdef DEBUG_LEVELING
     void print_xyz(const char *prefix, const float x, const float y, const float z) {
       SERIAL_ECHO_START;
-      SERIAL_ECHOPGM(prefix);
+      SERIAL_ECHO(prefix);
       SERIAL_ECHOPAIR(": (", x);
       SERIAL_ECHOPAIR(", ", y);
       SERIAL_ECHOPAIR(", ", z);
@@ -1401,7 +1401,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
 
     #ifdef DEBUG_LEVELING
       SERIAL_ECHOLNPGM("probe_pt >>>");
-      SERIAL_ECHOPAIR("> ProbeAction:", probe_action);
+      SERIAL_ECHOPAIR("> ProbeAction:", (unsigned long)probe_action);
       SERIAL_EOL;
       print_xyz("> current_position", current_position);
     #endif
@@ -1435,7 +1435,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     #if Z_RAISE_BETWEEN_PROBINGS > 0
       if (probe_action == ProbeStay) {
         #ifdef DEBUG_LEVELING
-          SERIAL_ECHOPAIR("Raise Z by ", Z_RAISE_BETWEEN_PROBINGS);
+          SERIAL_ECHOPAIR("Raise Z by ", (unsigned long)Z_RAISE_BETWEEN_PROBINGS);
           SERIAL_EOL;
           print_xyz("> ProbeStay > do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS);
         #endif
@@ -1635,7 +1635,7 @@ static void homeaxis(AxisEnum axis) {
     axis_is_at_home(axis);
 
     #ifdef DEBUG_LEVELING
-      SERIAL_ECHOPAIR("home_axis with axis=", axis);
+      SERIAL_ECHOPAIR("home_axis with axis=", (unsigned long)axis);
       SERIAL_EOL;
       print_xyz("home_axis > current_position", current_position);
     #endif
