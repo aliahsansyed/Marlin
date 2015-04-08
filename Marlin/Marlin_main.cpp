@@ -1230,11 +1230,17 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     saved_feedmultiply = feedmultiply;
     feedmultiply = 100;
     refresh_cmd_timeout();
+    #ifdef DEBUG_LEVELING
+      SERIAL_ECHOLNPGM("enable_endstops(true)");
+    #endif
     enable_endstops(true);
   }
 
   static void clean_up_after_endstop_move() {
     #ifdef ENDSTOPS_ONLY_FOR_HOMING
+      #ifdef DEBUG_LEVELING
+        SERIAL_ECHOLNPGM("ENDSTOPS_ONLY_FOR_HOMING enable_endstops(false)");
+      #endif
       enable_endstops(false);
     #endif
     feedrate = saved_feedrate;
@@ -1245,7 +1251,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
   static void deploy_z_probe() {
 
     #ifdef DEBUG_LEVELING
-      SERIAL_ECHOLNPGM("deploy_z_probe > current_position", current_position);
+      print_xyz("deploy_z_probe > current_position", current_position);
     #endif
 
     #ifdef SERVO_ENDSTOPS
@@ -1513,7 +1519,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     // Reset calibration results to zero.
     void reset_bed_level() {
       #ifdef DEBUG_LEVELING
-        SERIAL_ERRORLNPGM("reset_bed_level");
+        SERIAL_ECHOLNPGM("reset_bed_level");
       #endif
       for (int y = 0; y < AUTO_BED_LEVELING_GRID_POINTS; y++) {
         for (int x = 0; x < AUTO_BED_LEVELING_GRID_POINTS; x++) {
