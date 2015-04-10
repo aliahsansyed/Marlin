@@ -1034,7 +1034,6 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
 
   #ifdef DEBUG_LEVELING
     void print_xyz(const char *prefix, const float x, const float y, const float z) {
-      SERIAL_ECHO_START;
       SERIAL_ECHO(prefix);
       SERIAL_ECHOPAIR(": (", x);
       SERIAL_ECHOPAIR(", ", y);
@@ -1329,6 +1328,13 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
       if (servo_endstops[Z_AXIS] >= 0) {
 
         #if Z_RAISE_AFTER_PROBING > 0
+
+          #ifdef DEBUG_LEVELING
+            SERIAL_ECHOPAIR("Raise Z (after) by ", (float)Z_RAISE_AFTER_PROBINGS);
+            SERIAL_EOL;
+            print_xyz("> SERVO_ENDSTOPS > do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_AFTER_PROBINGS);
+          #endif
+
           do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_AFTER_PROBING);
           st_synchronize();
         #endif
@@ -1442,7 +1448,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     #if Z_RAISE_BETWEEN_PROBINGS > 0
       if (probe_action == ProbeStay) {
         #ifdef DEBUG_LEVELING
-          SERIAL_ECHOPAIR("Raise Z by ", (unsigned long)Z_RAISE_BETWEEN_PROBINGS);
+          SERIAL_ECHOPAIR("Raise Z (between) by ", (float)Z_RAISE_BETWEEN_PROBINGS);
           SERIAL_EOL;
           print_xyz("> ProbeStay > do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS);
         #endif
@@ -1470,6 +1476,11 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
       SERIAL_PROTOCOL_F(measured_z, 3);
       SERIAL_EOL;
     }
+
+    #ifdef DEBUG_LEVELING
+      SERIAL_ECHOLNPGM("<<< probe_pt");
+    #endif
+
     return measured_z;
   }
 
@@ -1951,6 +1962,8 @@ inline void gcode_G28() {
       if (home_all_axis || homeZ) {
         destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);    // Set destination away from bed
         #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
+          SERIAL_EOL;
           print_xyz("> (home_all_axis || homeZ) > destination", destination);
         #endif
         feedrate = max_feedrate[Z_AXIS] * 60;
@@ -2096,6 +2109,9 @@ inline void gcode_G28() {
           current_position[Z_AXIS] = 0;
 
           #ifdef DEBUG_LEVELING
+            SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
+            SERIAL_EOL;
+            print_xyz("> home_all_axis > current_position", current_position);
             print_xyz("> home_all_axis > destination", destination);
           #endif
 
@@ -2127,6 +2143,9 @@ inline void gcode_G28() {
               feedrate = max_feedrate[Z_AXIS] * 60;  // max_feedrate is in mm/s. line_to_destination is feedrate/60.
 
               #ifdef DEBUG_LEVELING
+                SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
+                SERIAL_EOL;
+                print_xyz("> homeZ > current_position", current_position);
                 print_xyz("> homeZ > destination", destination);
               #endif
 
@@ -2550,7 +2569,22 @@ inline void gcode_G28() {
 
           // raise extruder
           float measured_z,
-                z_before = probePointCounter ? Z_RAISE_BETWEEN_PROBINGS + current_position[Z_AXIS] : Z_RAISE_BEFORE_PROBING;
+                z_before;
+
+          if (probePointCounter) {
+            z_before = Z_RAISE_BETWEEN_PROBINGS + current_position[Z_AXIS];
+            #ifdef DEBUG_LEVELING
+              SERIAL_ECHOPAIR("Raise Z (between) by ", (float)Z_RAISE_BETWEEN_PROBINGS);
+              SERIAL_EOL;
+            #endif
+          }
+          else {
+            z_before = Z_RAISE_BEFORE_PROBING;
+            #ifdef DEBUG_LEVELING
+              SERIAL_ECHOPAIR("Raise Z (before) by ", (float)Z_RAISE_BEFORE_PROBING);
+              SERIAL_EOL;
+            #endif
+          }
 
           #ifdef DELTA
             // Avoid probing the corners (outside the round or hexagon print surface) on a delta printer.
