@@ -1330,9 +1330,9 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
         #if Z_RAISE_AFTER_PROBING > 0
 
           #ifdef DEBUG_LEVELING
-            SERIAL_ECHOPAIR("Raise Z (after) by ", (float)Z_RAISE_AFTER_PROBINGS);
+            SERIAL_ECHOPAIR("Raise Z (after) by ", (float)Z_RAISE_AFTER_PROBING);
             SERIAL_EOL;
-            print_xyz("> SERVO_ENDSTOPS > do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_AFTER_PROBINGS);
+            print_xyz("> SERVO_ENDSTOPS > do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_AFTER_PROBING);
           #endif
 
           do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_AFTER_PROBING);
