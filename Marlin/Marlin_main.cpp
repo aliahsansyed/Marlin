@@ -1422,13 +1422,15 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     // move to right place
 
     #ifdef DEBUG_LEVELING
+      SERIAL_ECHOPAIR("Z Raise to z_before ", z_before);
+      SERIAL_EOL;
       print_xyz("> do_blocking_move_to", current_position[X_AXIS], current_position[Y_AXIS], z_before);
     #endif
 
     do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before);
 
     #ifdef DEBUG_LEVELING
-      print_xyz("> do_blocking_move_to", x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
+      print_xyz("> do_blocking_move_to XY", x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
     #endif
 
     do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]);
@@ -1460,7 +1462,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     #if !defined(Z_PROBE_SLED) && !defined(Z_PROBE_ALLEN_KEY)
       if (probe_action & ProbeStow) {
         #ifdef DEBUG_LEVELING
-          SERIAL_ECHOLNPGM("> ProbeStow");
+          SERIAL_ECHOLNPGM("> ProbeStow (stow_z_probe will do Z Raise)");
         #endif
         stow_z_probe();
       }
@@ -2574,14 +2576,14 @@ inline void gcode_G28() {
           if (probePointCounter) {
             z_before = Z_RAISE_BETWEEN_PROBINGS + current_position[Z_AXIS];
             #ifdef DEBUG_LEVELING
-              SERIAL_ECHOPAIR("Raise Z (between) by ", (float)Z_RAISE_BETWEEN_PROBINGS);
+              SERIAL_ECHOPAIR("z_before = (between) ", (float)Z_RAISE_BETWEEN_PROBINGS);
               SERIAL_EOL;
             #endif
           }
           else {
             z_before = Z_RAISE_BEFORE_PROBING;
             #ifdef DEBUG_LEVELING
-              SERIAL_ECHOPAIR("Raise Z (before) by ", (float)Z_RAISE_BEFORE_PROBING);
+              SERIAL_ECHOPAIR("z_before = (before) ", (float)Z_RAISE_BEFORE_PROBING);
               SERIAL_EOL;
             #endif
           }
