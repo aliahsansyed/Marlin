@@ -2180,14 +2180,20 @@ inline void gcode_G28() {
     #endif // Z_HOME_DIR < 0
 
     // Set the Z position, if included
-    // Adds the home_offset as well, which may be wrong
-    if (code_seen(axis_codes[Z_AXIS])) {
+    // Adds the home_offset as well (which may be wrong?)
+    if (homeZ) {
       float v = code_value();
       if (v) current_position[Z_AXIS] = v + home_offset[Z_AXIS];
     }
 
     #if defined(ENABLE_AUTO_BED_LEVELING) && (Z_HOME_DIR < 0)
-      if (home_all_axis || homeZ) current_position[Z_AXIS] += zprobe_zoffset;  // Add Z_Probe offset (the distance is negative)
+      if (home_all_axis || homeZ) {
+        current_position[Z_AXIS] += zprobe_zoffset;  // Add Z_Probe offset (the distance is negative)
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPAIR("> (home_all_axis || homeZ) > Add zprobe_zoffset:", zprobe_zoffset);
+          print_xyz("> current_position", current_position);
+        #endif
+      }
     #endif
     sync_plan_position();
 
@@ -4616,7 +4622,7 @@ inline void gcode_M503() {
     if (code_seen('Z')) {
       value = code_value();
       if (Z_PROBE_OFFSET_RANGE_MIN <= value && value <= Z_PROBE_OFFSET_RANGE_MAX) {
-        zprobe_zoffset = -value; // compare w/ line 278 of ConfigurationStore.cpp
+        zprobe_zoffset = -value; // compare w/ ConfigurationStore.cpp
         SERIAL_ECHO_START;
         SERIAL_ECHOLNPGM(MSG_ZPROBE_ZOFFSET " " MSG_OK);
         SERIAL_EOL;
@@ -5530,8 +5536,8 @@ void clamp_to_software_endstops(float target[3])
     
     float negative_z_offset = 0;
     #ifdef ENABLE_AUTO_BED_LEVELING
-      if (Z_PROBE_OFFSET_FROM_EXTRUDER < 0) negative_z_offset = negative_z_offset + Z_PROBE_OFFSET_FROM_EXTRUDER;
-      if (home_offset[Z_AXIS] < 0) negative_z_offset = negative_z_offset + home_offset[Z_AXIS];
+      if (Z_PROBE_OFFSET_FROM_EXTRUDER < 0) negative_z_offset += Z_PROBE_OFFSET_FROM_EXTRUDER;
+      if (home_offset[Z_AXIS] < 0) negative_z_offset += home_offset[Z_AXIS];
     #endif
     
     if (target[Z_AXIS] < min_pos[Z_AXIS]+negative_z_offset) target[Z_AXIS] = min_pos[Z_AXIS]+negative_z_offset;
