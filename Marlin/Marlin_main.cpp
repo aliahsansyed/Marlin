@@ -927,7 +927,20 @@ XYZ_CONSTS_FROM_CONFIG(signed char, home_dir,  HOME_DIR);
 
 #endif //DUAL_X_CARRIAGE
 
-static void axis_is_at_home(int axis) {
+#ifdef DEBUG_LEVELING
+  void print_xyz(const char *prefix, const float x, const float y, const float z) {
+    SERIAL_ECHO(prefix);
+    SERIAL_ECHOPAIR(": (", x);
+    SERIAL_ECHOPAIR(", ", y);
+    SERIAL_ECHOPAIR(", ", z);
+    SERIAL_ECHOLNPGM(")");
+  }
+  void print_xyz(const char *prefix, const float xyz[]) {
+    print_xyz(prefix, xyz[X_AXIS], xyz[Y_AXIS], xyz[Z_AXIS]);
+  }
+#endif
+
+static void axis_is_at_home(AxisEnum axis) {
 
   #ifdef DUAL_X_CARRIAGE
     if (axis == X_AXIS) {
@@ -992,6 +1005,11 @@ static void axis_is_at_home(int axis) {
     min_pos[axis] = base_min_pos(axis) + home_offset[axis];
     max_pos[axis] = base_max_pos(axis) + home_offset[axis];
   #endif
+  #ifdef DEBUG_LEVELING
+    SERIAL_ECHOPAIR("axis_is_at_home ", (unsigned long)axis);
+    SERIAL_ECHOPAIR(" > (home_offset[axis]==", home_offset[axis]);
+    print_xyz(") > current_position", current_position);
+  #endif
 }
 
 /**
@@ -1031,19 +1049,6 @@ inline void set_current_to_destination() { memcpy(current_position, destination,
 inline void set_destination_to_current() { memcpy(destination, current_position, sizeof(destination)); }
 
 #ifdef ENABLE_AUTO_BED_LEVELING
-
-  #ifdef DEBUG_LEVELING
-    void print_xyz(const char *prefix, const float x, const float y, const float z) {
-      SERIAL_ECHO(prefix);
-      SERIAL_ECHOPAIR(": (", x);
-      SERIAL_ECHOPAIR(", ", y);
-      SERIAL_ECHOPAIR(", ", z);
-      SERIAL_ECHOLNPGM(")");
-    }
-    void print_xyz(const char *prefix, const float xyz[]) {
-      print_xyz(prefix, xyz[X_AXIS], xyz[Y_AXIS], xyz[Z_AXIS]);
-    }
-  #endif
 
   #ifdef DELTA
     /**
@@ -2180,13 +2185,30 @@ inline void gcode_G28() {
     #endif // Z_HOME_DIR < 0
 
     // Set the Z position, if included
-    // Adds the home_offset as well (which may be wrong?)
-    if (homeZ) {
+    // Adds the home_offset as well (which may be wrong!)
+    if (code_seen(axis_codes[Z_AXIS])) {
       float v = code_value();
-      if (v) current_position[Z_AXIS] = v + home_offset[Z_AXIS];
+      #ifdef DEBUG_LEVELING
+        SERIAL_ECHOLNPGM("> G28 Zn >>");
+      #endif
+      if (v) {
+        current_position[Z_AXIS] = v + home_offset[Z_AXIS];
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPAIR(" > (home_offset[Z_AXIS]==", home_offset[Z_AXIS]);
+          print_xyz(") > current_position", current_position);
+        #endif
+      }
+      else {
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPGM("> Not setting Z value!");
+        #endif
+      }
+      #ifdef DEBUG_LEVELING
+        SERIAL_ECHOLNPGM("> << G28 Zn");
+      #endif
     }
 
-    #if defined(ENABLE_AUTO_BED_LEVELING) && (Z_HOME_DIR < 0)
+    #if defined(ENABLE_AUTO_BED_LEVELING) && Z_HOME_DIR < 0
       if (home_all_axis || homeZ) {
         current_position[Z_AXIS] += zprobe_zoffset;  // Add Z_Probe offset (the distance is negative)
         #ifdef DEBUG_LEVELING
@@ -5533,14 +5555,20 @@ void clamp_to_software_endstops(float target[3])
   if (min_software_endstops) {
     if (target[X_AXIS] < min_pos[X_AXIS]) target[X_AXIS] = min_pos[X_AXIS];
     if (target[Y_AXIS] < min_pos[Y_AXIS]) target[Y_AXIS] = min_pos[Y_AXIS];
-    
+
     float negative_z_offset = 0;
     #ifdef ENABLE_AUTO_BED_LEVELING
       if (Z_PROBE_OFFSET_FROM_EXTRUDER < 0) negative_z_offset += Z_PROBE_OFFSET_FROM_EXTRUDER;
-      if (home_offset[Z_AXIS] < 0) negative_z_offset += home_offset[Z_AXIS];
+      if (home_offset[Z_AXIS] < 0) {
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPAIR("> clamp_to_software_endstops > Add home_offset[Z_AXIS]:", home_offset[Z_AXIS]);
+          SERIAL_EOL;
+        #endif
+        negative_z_offset += home_offset[Z_AXIS];
+      }
     #endif
-    
-    if (target[Z_AXIS] < min_pos[Z_AXIS]+negative_z_offset) target[Z_AXIS] = min_pos[Z_AXIS]+negative_z_offset;
+
+    if (target[Z_AXIS] < min_pos[Z_AXIS] + negative_z_offset) target[Z_AXIS] = min_pos[Z_AXIS] + negative_z_offset;
   }
 
   if (max_software_endstops) {
