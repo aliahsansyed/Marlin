@@ -115,7 +115,7 @@ FORCE_INLINE uint8_t movesplanned() { return BLOCK_MOD(block_buffer_head - block
 
 void plan_set_e_position(const float &e);
 
-extern unsigned long minsegmenttime;
+extern millis_t minsegmenttime;
 extern float max_feedrate[NUM_AXIS]; // set the max speeds
 extern float axis_steps_per_unit[NUM_AXIS];
 extern unsigned long max_acceleration_units_per_sq_second[NUM_AXIS]; // Use M201 to override by software
@@ -161,10 +161,6 @@ FORCE_INLINE block_t *plan_get_current_block() {
     return NULL;
 }
 
-#ifdef PREVENT_DANGEROUS_EXTRUDE
-  void set_extrude_min_temp(float temp);
-#endif
-
 void reset_acceleration_rates();
 
-#endif //PLANNER_H
+#endif // PLANNER_H

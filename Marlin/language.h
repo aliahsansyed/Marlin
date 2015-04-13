@@ -70,12 +70,12 @@
   #endif
 #else
   #ifndef MACHINE_NAME
-    #define MACHINE_NAME "Mendel"
+    #define MACHINE_NAME "3D Printer"
   #endif
 #endif
 
 #ifdef CUSTOM_MENDEL_NAME
-  #warning CUSTOM_MENDEL_NAME deprecated - use CUSTOM_MACHINE_NAME
+  #error CUSTOM_MENDEL_NAME deprecated - use CUSTOM_MACHINE_NAME
   #define CUSTOM_MACHINE_NAME CUSTOM_MENDEL_NAME
 #endif
 
