@@ -852,6 +852,11 @@ void get_command()
 
 }
 
+float code_has_value() {
+  char c = *(strchr_pointer + 1);
+  return (c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.';
+}
+
 float code_value() {
   float ret;
   char *e = strchr(strchr_pointer, 'E');
@@ -1954,20 +1959,20 @@ inline void gcode_G28() {
 
     home_all_axis = !(homeX || homeY || homeZ) || (homeX && homeY && homeZ);
 
-    #if Z_HOME_DIR > 0                      // If homing away from BED do Z first
+    if (home_all_axis || homeZ) {
 
-      if (home_all_axis || homeZ) {
+      #if Z_HOME_DIR > 0  // If homing away from BED do Z first
+
         HOMEAXIS(Z);
         #ifdef DEBUG_LEVELING
           print_xyz("> HOMEAXIS(Z) > current_position", current_position);
         #endif
-      }
 
-    #elif !defined(Z_SAFE_HOMING) && defined(Z_RAISE_BEFORE_HOMING) && Z_RAISE_BEFORE_HOMING > 0
+      #elif !defined(Z_SAFE_HOMING) && defined(Z_RAISE_BEFORE_HOMING) && Z_RAISE_BEFORE_HOMING > 0
 
-      // Raise Z before homing any other axes
-      if (home_all_axis || homeZ) {
-        destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);    // Set destination away from bed
+        // Raise Z before homing any other axes
+        // (Does this need to be "negative home direction?" Why not just use Z_RAISE_BEFORE_HOMING?)
+        destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);
         #ifdef DEBUG_LEVELING
           SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
           SERIAL_EOL;
@@ -1976,9 +1981,10 @@ inline void gcode_G28() {
         feedrate = max_feedrate[Z_AXIS] * 60;
         line_to_destination();
         st_synchronize();
-      }
 
-    #endif
+      #endif
+
+    } // home_all_axis || homeZ
 
     #ifdef QUICK_HOME
 
@@ -2063,28 +2069,16 @@ inline void gcode_G28() {
     }
 
     // Set the X position, if included
-    // Adds the home_offset as well, which may be wrong
-    if (code_seen(axis_codes[X_AXIS])) {
-      float v = code_value();
-      if (v) current_position[X_AXIS] = v
-        #ifndef SCARA
-          + home_offset[X_AXIS]
-        #endif
-      ;
+    if (code_seen(axis_codes[X_AXIS]) && code_has_value()) {
+      current_position[X_AXIS] = code_value();
       #ifdef DEBUG_LEVELING
         print_xyz("> Set X", current_position);
       #endif
     }
 
     // Set the Y position, if included
-    // Adds the home_offset as well, which may be wrong
-    if (code_seen(axis_codes[Y_AXIS])) {
-      float v = code_value();
-      if (v) current_position[Y_AXIS] = v
-        #ifndef SCARA
-          + home_offset[Y_AXIS]
-        #endif
-      ;
+    if (code_seen(axis_codes[Y_AXIS]) && code_has_value()) {
+      current_position[Y_AXIS] = code_value();
       #ifdef DEBUG_LEVELING
         print_xyz("> Set Y", current_position);
       #endif
@@ -2093,118 +2087,122 @@ inline void gcode_G28() {
     // Home Z last if homing towards the bed
     #if Z_HOME_DIR < 0
 
-      #ifndef Z_SAFE_HOMING
+      if (home_all_axis || homeZ) {
 
-        if (home_all_axis || homeZ) {
-          HOMEAXIS(Z);
-          #ifdef DEBUG_LEVELING
-            print_xyz("> HOMEAXIS(Z) > current_position", current_position);
-          #endif
-        }
-
-      #else // Z_SAFE_HOMING
-
-        #ifdef DEBUG_LEVELING
-          SERIAL_ECHOLNPGM("> Z_SAFE_HOMING >>>");
-        #endif
-
-        if (home_all_axis) {
-          destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT - X_PROBE_OFFSET_FROM_EXTRUDER);
-          destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT - Y_PROBE_OFFSET_FROM_EXTRUDER);
-          destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);    // Set destination away from bed
-          feedrate = XY_TRAVEL_SPEED;
-          current_position[Z_AXIS] = 0;
+        #ifdef Z_SAFE_HOMING
 
           #ifdef DEBUG_LEVELING
-            SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
-            SERIAL_EOL;
-            print_xyz("> home_all_axis > current_position", current_position);
-            print_xyz("> home_all_axis > destination", destination);
+            SERIAL_ECHOLNPGM("> Z_SAFE_HOMING >>>");
           #endif
 
-          sync_plan_position();
-          line_to_destination();
-          st_synchronize();
-          current_position[X_AXIS] = destination[X_AXIS];
-          current_position[Y_AXIS] = destination[Y_AXIS];
+          if (home_all_axis) {
 
-          HOMEAXIS(Z);
-          #ifdef DEBUG_LEVELING
-            print_xyz("> home_all_axis > final", current_position);
-          #endif
-        }
+            current_position[Z_AXIS] = 0;
+            sync_plan_position();
 
-        // Let's see if X and Y are homed and probe is inside bed area.
-        if (homeZ) {
+            //
+            // Set the probe (or just the nozzle) destination to the safe homing point
+            //
+            // NOTE: If current_position[X_AXIS] or current_position[Y_AXIS] were set above
+            // then this may not work as expected.
+            destination[X_AXIS] = round(Z_SAFE_HOMING_X_POINT - X_PROBE_OFFSET_FROM_EXTRUDER);
+            destination[Y_AXIS] = round(Z_SAFE_HOMING_Y_POINT - Y_PROBE_OFFSET_FROM_EXTRUDER);
+            destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);    // Set destination away from bed
+            feedrate = XY_TRAVEL_SPEED;
 
-          if (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) {
+            #ifdef DEBUG_LEVELING
+              SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
+              SERIAL_EOL;
+              print_xyz("> home_all_axis > current_position", current_position);
+              print_xyz("> home_all_axis > destination", destination);
+            #endif
 
-            float cpx = current_position[X_AXIS], cpy = current_position[Y_AXIS];
-            if (   cpx >= X_MIN_POS - X_PROBE_OFFSET_FROM_EXTRUDER
-                && cpx <= X_MAX_POS - X_PROBE_OFFSET_FROM_EXTRUDER
-                && cpy >= Y_MIN_POS - Y_PROBE_OFFSET_FROM_EXTRUDER
-                && cpy <= Y_MAX_POS - Y_PROBE_OFFSET_FROM_EXTRUDER) {
-              current_position[Z_AXIS] = 0;
-              plan_set_position(cpx, cpy, 0, current_position[E_AXIS]);
-              destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);    // Set destination away from bed
-              feedrate = max_feedrate[Z_AXIS] * 60;  // max_feedrate is in mm/s. line_to_destination is feedrate/60.
+            // This could potentially move X, Y, Z all together
+            line_to_destination();
+            st_synchronize();
 
-              #ifdef DEBUG_LEVELING
-                SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
-                SERIAL_EOL;
-                print_xyz("> homeZ > current_position", current_position);
-                print_xyz("> homeZ > destination", destination);
-              #endif
+            // Set current X, Y is the Z_SAFE_HOMING_POINT minus PROBE_OFFSET_FROM_EXTRUDER
+            current_position[X_AXIS] = destination[X_AXIS];
+            current_position[Y_AXIS] = destination[Y_AXIS];
 
-              line_to_destination();
-              st_synchronize();
-              HOMEAXIS(Z);
-              #ifdef DEBUG_LEVELING
-                print_xyz("> homeZ > final", current_position);
-              #endif
-            }
-            else {
+            // Home the Z axis
+            HOMEAXIS(Z);
+            #ifdef DEBUG_LEVELING
+              print_xyz("> home_all_axis > final", current_position);
+            #endif
+          }
+
+          else if (homeZ) { // Don't need to Home Z twice
+
+            // Let's see if X and Y are homed
+            if (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) {
+
+              // Make sure the probe is within the physical limits
+              // NOTE: This doesn't necessarily ensure the probe is also within the bed!
+              float cpx = current_position[X_AXIS], cpy = current_position[Y_AXIS];
+              if (   cpx >= X_MIN_POS - X_PROBE_OFFSET_FROM_EXTRUDER
+                  && cpx <= X_MAX_POS - X_PROBE_OFFSET_FROM_EXTRUDER
+                  && cpy >= Y_MIN_POS - Y_PROBE_OFFSET_FROM_EXTRUDER
+                  && cpy <= Y_MAX_POS - Y_PROBE_OFFSET_FROM_EXTRUDER) {
+
+                // Set the plan current position to X, Y, 0
+                current_position[Z_AXIS] = 0;
+                plan_set_position(cpx, cpy, 0, current_position[E_AXIS]); // = sync_plan_position
+
+                // Set Z destination away from bed and raise the axis
+                // NOTE: This should always just be Z_RAISE_BEFORE_HOMING unless...???
+                destination[Z_AXIS] = -Z_RAISE_BEFORE_HOMING * home_dir(Z_AXIS);
+                feedrate = max_feedrate[Z_AXIS] * 60;  // feedrate (mm/m) = max_feedrate (mm/s)
+
+                #ifdef DEBUG_LEVELING
+                  SERIAL_ECHOPAIR("Raise Z (before homing) by ", (float)Z_RAISE_BEFORE_HOMING);
+                  SERIAL_EOL;
+                  print_xyz("> homeZ > current_position", current_position);
+                  print_xyz("> homeZ > destination", destination);
+                #endif
+
+                line_to_destination();
+                st_synchronize();
+
+                // Home the Z axis
+                HOMEAXIS(Z);
+                #ifdef DEBUG_LEVELING
+                  print_xyz("> homeZ > final", current_position);
+                #endif
+              }
+              else {
                 LCD_MESSAGEPGM(MSG_ZPROBE_OUT);
                 SERIAL_ECHO_START;
                 SERIAL_ECHOLNPGM(MSG_ZPROBE_OUT);
+              }
             }
-          }
-          else {
-            LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
-            SERIAL_ECHO_START;
-            SERIAL_ECHOLNPGM(MSG_POSITION_UNKNOWN);
-          }
-        }
+            else {
+              LCD_MESSAGEPGM(MSG_POSITION_UNKNOWN);
+              SERIAL_ECHO_START;
+              SERIAL_ECHOLNPGM(MSG_POSITION_UNKNOWN);
+            }
 
-        #ifdef DEBUG_LEVELING
-          SERIAL_ECHOLNPGM("<<< Z_SAFE_HOMING");
-        #endif
+          } // !home_all_axes && homeZ
 
-      #endif // Z_SAFE_HOMING
+          #ifdef DEBUG_LEVELING
+            SERIAL_ECHOLNPGM("<<< Z_SAFE_HOMING");
+          #endif
+
+        #else // !Z_SAFE_HOMING
+
+          HOMEAXIS(Z);
+
+        #endif // !Z_SAFE_HOMING
+
+      } // home_all_axis || homeZ
 
     #endif // Z_HOME_DIR < 0
 
     // Set the Z position, if included
-    // Adds the home_offset as well (which may be wrong!)
-    if (code_seen(axis_codes[Z_AXIS])) {
-      float v = code_value();
+    if (code_seen(axis_codes[Z_AXIS]) && code_has_value()) {
+      current_position[Z_AXIS] = code_value();
       #ifdef DEBUG_LEVELING
-        SERIAL_ECHOLNPGM("> G28 Zn >>");
-      #endif
-      if (v) {
-        current_position[Z_AXIS] = v + home_offset[Z_AXIS];
-        #ifdef DEBUG_LEVELING
-          SERIAL_ECHOPAIR(" > (home_offset[Z_AXIS]==", home_offset[Z_AXIS]);
-          print_xyz(") > current_position", current_position);
-        #endif
-      }
-      else {
-        #ifdef DEBUG_LEVELING
-          SERIAL_ECHOPGM("> Not setting Z value!");
-        #endif
-      }
-      #ifdef DEBUG_LEVELING
-        SERIAL_ECHOLNPGM("> << G28 Zn");
+        print_xyz("Set Z", current_position);
       #endif
     }
 
@@ -2217,6 +2215,7 @@ inline void gcode_G28() {
         #endif
       }
     #endif
+
     sync_plan_position();
 
   #endif // else DELTA
