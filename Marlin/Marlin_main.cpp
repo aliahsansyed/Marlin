@@ -2833,6 +2833,20 @@ inline void gcode_M31() {
     }
   }
 
+  #if defined(SDCARD_SORT_ALPHA) && SORT_ONOFF
+    /**
+     * M33: Set SD Card Sorting Options
+     */
+    inline void gcode_M33() {
+      if (code_seen('S')) card.setSortOn(code_value() != 0);
+      if (code_seen('F')) {
+        int v = code_value_long();
+        card.setSortFolders(v < 0 ? -1 : v > 0 ? 1 : 0);
+      }
+      //if (code_seen('R')) card.setSortReverse(code_value() != 0);
+    }
+  #endif // SDCARD_SORT_ALPHA && SORT_ONOFF
+
   /**
    * M928: Start SD Write
    */
@@ -4408,6 +4422,16 @@ inline void gcode_M503() {
   Config_PrintSettings(code_seen('S') && code_value() == 0);
 }
 
+/**
+ * M505: print Free RAM
+ */
+inline void gcode_M505() {
+  SERIAL_ECHO_START;
+  SERIAL_ECHOPGM("Free RAM: ");
+  SERIAL_ECHO(freeMemory());
+  SERIAL_EOL;
+}
+
 #ifdef ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED
 
   /**
@@ -4905,6 +4929,12 @@ void process_commands() {
           gcode_M30(); break;
         case 32: //M32 - Select file and start SD print
           gcode_M32(); break;
+
+        #if defined(SDCARD_SORT_ALPHA) && SORT_ONOFF
+          case 33: //M33 - Set sorting options
+            gcode_M33(); break;
+        #endif
+
         case 928: //M928 - Start SD write
           gcode_M928(); break;
 
@@ -5210,6 +5240,9 @@ void process_commands() {
         break;
       case 503: // M503 print settings currently in memory
         gcode_M503();
+        break;
+      case 505: // M505 print free RAM
+        gcode_M505();
         break;
 
       #ifdef ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED
@@ -5706,7 +5739,7 @@ void calculate_SCARA_forward_Transform(float f_scara[3])
   
     delta[X_AXIS] = x_cos + y_cos + SCARA_offset_x;  //theta
     delta[Y_AXIS] = x_sin + y_sin + SCARA_offset_y;  //theta+phi
-  
+
     //SERIAL_ECHOPGM(" delta[X_AXIS]="); SERIAL_ECHO(delta[X_AXIS]);
     //SERIAL_ECHOPGM(" delta[Y_AXIS]="); SERIAL_ECHOLN(delta[Y_AXIS]);
 }  

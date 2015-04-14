@@ -1,3 +1,16 @@
+/**
+ * Configuration.h
+ *
+ * Basic settings such as:
+ *
+ * - Type of electronics
+ * - Type of temperature sensor
+ * - Printer geometry
+ * - Endstop configuration
+ *
+ * Advanced settings can be found in Configuration_adv.h
+ *
+ */
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
@@ -43,7 +56,7 @@ Here are some standard links for getting your machine calibrated:
 #define STRING_VERSION "1.0.3 dev"
 #define STRING_URL "reprap.org"
 #define STRING_VERSION_CONFIG_H __DATE__ " " __TIME__ // build date and time
-#define STRING_CONFIG_H_AUTHOR "(none, default config)" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "(thinkyhead, prusa-i3)" // Who made the changes.
 #define STRING_SPLASH_LINE1 "v" STRING_VERSION // will be shown during bootup in line 1
 //#define STRING_SPLASH_LINE2 STRING_VERSION_CONFIG_H // will be shown during bootup in line2
 
@@ -70,7 +83,7 @@ Here are some standard links for getting your machine calibrated:
 
 // Optional custom name for your RepStrap or other custom machine
 // Displayed in the LCD "Ready" message
-// #define CUSTOM_MACHINE_NAME "3D Printer"
+#define CUSTOM_MACHINE_NAME "Prusa i3"
 
 // Define this to set a unique identifier for this printer, (Used by some programs to differentiate between machines)
 // You can use an online service to generate a random UUID. (eg http://www.uuidgenerator.net/version4)
@@ -80,9 +93,11 @@ Here are some standard links for getting your machine calibrated:
 // :[1,2,3,4]
 #define EXTRUDERS 1
 
-// Offset of the extruders (uncomment if using more than one and relying on firmware to position when changing).
-// The offset has to be X=0, Y=0 for the extruder 0 hotend (default extruder).
-// For the other hotends it is their distance from the extruder 0 hotend.
+/**
+ * Offset of the extruders (uncomment if using more than one and relying on firmware to position when changing).
+ * The offset has to be X=0, Y=0 for the extruder 0 hotend (default extruder).
+ * For the other hotends it is their distance from the extruder 0 hotend.
+ */
 //#define EXTRUDER_OFFSET_X {0.0, 20.00} // (in mm) for each extruder, offset of the hotend on the X axis
 //#define EXTRUDER_OFFSET_Y {0.0, 5.00}  // (in mm) for each extruder, offset of the hotend on the Y axis
 
@@ -91,7 +106,7 @@ Here are some standard links for getting your machine calibrated:
 // 2 = X-Box 360 203Watts (the blue wire connected to PS_ON and the red wire to VCC)
 // :{1:'ATX',2:'X-Box 360'}
 
-#define POWER_SUPPLY 1
+#define POWER_SUPPLY 0
 
 // Define this to have the electronics keep the power supply off on startup. If you don't know what this is leave it.
 // #define PS_DEFAULT_OFF
@@ -144,7 +159,7 @@ Here are some standard links for getting your machine calibrated:
 #define TEMP_SENSOR_1 0
 #define TEMP_SENSOR_2 0
 #define TEMP_SENSOR_3 0
-#define TEMP_SENSOR_BED 0
+#define TEMP_SENSOR_BED 1
 
 // This makes temp sensor 1 a redundant sensor for sensor 0. If the temperatures difference between these sensors is to high the print will be aborted.
 //#define TEMP_SENSOR_1_AS_REDUNDANT
@@ -176,7 +191,7 @@ Here are some standard links for getting your machine calibrated:
 // If your bed has low resistance e.g. .6 ohm and throws the fuse you can duty cycle it to reduce the
 // average current. The value should be an integer and the heat bed will be turned on for 1 interval of
 // HEATER_BED_DUTY_CYCLE_DIVIDER intervals.
-//#define HEATER_BED_DUTY_CYCLE_DIVIDER 4
+#define HEATER_BED_DUTY_CYCLE_DIVIDER 4
 
 // If you want the M105 heater power reported in watts, define the BED_WATTS, and (shared for all extruders) EXTRUDER_WATTS
 //#define EXTRUDER_WATTS (12.0*12.0/6.7) //  P=I^2/R
@@ -204,9 +219,9 @@ Here are some standard links for getting your machine calibrated:
 
 // If you are using a pre-configured hotend then you can use one of the value sets by uncommenting it
 // Ultimaker
-    #define  DEFAULT_Kp 22.2
-    #define  DEFAULT_Ki 1.08
-    #define  DEFAULT_Kd 114
+//    #define  DEFAULT_Kp 22.2
+//    #define  DEFAULT_Ki 1.08
+//    #define  DEFAULT_Kd 114
 
 // MakerGear
 //    #define  DEFAULT_Kp 7.0
@@ -217,6 +232,22 @@ Here are some standard links for getting your machine calibrated:
 //    #define  DEFAULT_Kp 63.0
 //    #define  DEFAULT_Ki 2.25
 //    #define  DEFAULT_Kd 440
+
+// J-Head from DIY Tech Shop - according to M303
+//    #define  DEFAULT_Kp 14.07
+//    #define  DEFAULT_Ki 0.56
+//    #define  DEFAULT_Kd 88.15
+
+// TORLON J-Head
+//    #define  DEFAULT_Kp 18.75
+//    #define  DEFAULT_Ki 0.91
+//    #define  DEFAULT_Kd 96.45
+
+// Torlon with insulator and fan, averaged
+    #define  DEFAULT_Kp 20.83
+    #define  DEFAULT_Ki 1.04
+    #define  DEFAULT_Kd 104.71
+
 #endif // PIDTEMP
 
 //===========================================================================
@@ -246,9 +277,9 @@ Here are some standard links for getting your machine calibrated:
 #ifdef PIDTEMPBED
 //120v 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
 //from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
-    #define  DEFAULT_bedKp 10.00
-    #define  DEFAULT_bedKi .023
-    #define  DEFAULT_bedKd 305.4
+//    #define  DEFAULT_bedKp 10.00
+//    #define  DEFAULT_bedKi .023
+//    #define  DEFAULT_bedKd 305.4
 
 //120v 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
 //from pidautotune
@@ -257,6 +288,13 @@ Here are some standard links for getting your machine calibrated:
 //    #define  DEFAULT_bedKd 1675.16
 
 // FIND YOUR OWN: "M303 E-1 C8 S90" to run autotune on the bed at 90 degreesC for 8 cycles.
+
+// From the above test...
+    #define  DEFAULT_bedKp 212.17
+    #define  DEFAULT_bedKi 22.8
+    #define  DEFAULT_bedKd 493.64
+
+
 #endif // PIDTEMPBED
 
 // @section extruder
@@ -299,8 +337,8 @@ your extruder heater takes 2 minutes to hit the target on heating.
 // uncomment the 2 defines below:
 
 // Parameters for all extruder heaters
-//#define THERMAL_RUNAWAY_PROTECTION_PERIOD 40 //in seconds
-//#define THERMAL_RUNAWAY_PROTECTION_HYSTERESIS 4 // in degree Celsius
+#define THERMAL_RUNAWAY_PROTECTION_PERIOD 40 //in seconds
+#define THERMAL_RUNAWAY_PROTECTION_HYSTERESIS 4 // in degree Celsius
 
 // If you want to enable this feature for your bed heater,
 // uncomment the 2 defines below:
@@ -342,11 +380,11 @@ your extruder heater takes 2 minutes to hit the target on heating.
 const bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 const bool Y_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 const bool Z_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool Y_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
+const bool X_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+const bool Y_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
+const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of the endstop.
 const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-//#define DISABLE_MAX_ENDSTOPS
+#define DISABLE_MAX_ENDSTOPS
 //#define DISABLE_MIN_ENDSTOPS
 
 // @section machine
@@ -376,9 +414,9 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 // @section machine
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
-#define INVERT_X_DIR false
+#define INVERT_X_DIR true
 #define INVERT_Y_DIR false
-#define INVERT_Z_DIR false
+#define INVERT_Z_DIR true
 
 // @section extruder
 
@@ -406,8 +444,8 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
 #define Z_MIN_POS 0
-#define X_MAX_POS 200
-#define Y_MAX_POS 200
+#define X_MAX_POS 195 // 205 for full bed
+#define Y_MAX_POS 193
 #define Z_MAX_POS 200
 
 //===========================================================================
@@ -578,20 +616,131 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 
 #define HOMING_FEEDRATE {50*60, 50*60, 4*60, 0}  // set the homing speeds (mm/min)
 
-// default settings
+/**
+ * Default Settings
+ *
+ * These settings can be reset by M502
+ */
 
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {80,80,4000,500}  // default steps per unit for Ultimaker
-#define DEFAULT_MAX_FEEDRATE          {300, 300, 5, 25}    // (mm/sec)
-#define DEFAULT_MAX_ACCELERATION      {3000,3000,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for Skeinforge 40+, for older versions raise them a lot.
+//
+// Example: Standard NEMA 17 with T2 belt and 20 tooth pulley
+//
+#define NEMA17_FULL_STEPS 200.0
+#define NEMA17_MICROSTEPS 16.0
+#define PULLEY_PITCH 2.0
+#define PULLEY_TEETH 20.0
+#define Z_ROD_PITCH 0.8
 
-#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E acceleration in mm/s^2 for printing moves
-#define DEFAULT_RETRACT_ACCELERATION  3000   // E acceleration in mm/s^2 for retracts
+#define WADE_PULLEY_TEETH 11.0
+#define WADE_GEAR_TEETH 45.0
+#define HOBBED_BOLT_DIAM 6.0
+
+#define NEMA17_MOTOR_STEPS (NEMA17_FULL_STEPS * NEMA17_MICROSTEPS)
+#define WADE_GEAR_RATIO (WADE_GEAR_TEETH / WADE_PULLEY_TEETH)
+#define HOBBED_BOLD_CIRC (M_PI * HOBBED_BOLT_DIAM)
+#define WADE_E_STEPS (NEMA17_MOTOR_STEPS * WADE_GEAR_RATIO / HOBBED_BOLD_CIRC)
+// (200 * 16) * (45.0 / 11.0) / (pi * 6.0) = 694.49429712
+
+//
+// Example: Calculate 2engineers.com 1:50 Geared Motor "Direct Drive"
+//
+#define ENG2_FULL_STEPS 48.0
+#define ENG2_MICROSTEPS 16.0
+#define ENG2_GEAR_RATIO 50.0
+#define ENG2_PULLEY_DIAM 10.56
+
+#define ENG2_MOTOR_STEPS (ENG2_FULL_STEPS * ENG2_MICROSTEPS)
+#define ENG2_GEAR_CIRC (M_PI * ENG2_PULLEY_DIAM)
+#define ENG2_CORRECTION (20 / 18.4)
+#define ENG2_E_STEPS (ENG2_MOTOR_STEPS * ENG2_GEAR_RATIO / ENG2_GEAR_CIRC) * ENG2_CORRECTION
+// (48 * 16 * 50) / (pi * 10.56) = 1157.4904952 * (20/18.4) = 1258.1418426
+
+//
+// Example: Ultimaker defaults based on MXL belt, then calibrated
+//
+#define UM_PULLEY_PITCH 2.032
+#define UM_PULLEY_TEETH 20.0
+
+// Get steps/mm from selected results above
+#define XY_STEPS (NEMA17_MOTOR_STEPS / (PULLEY_PITCH * PULLEY_TEETH))
+#define Z_STEPS (NEMA17_MOTOR_STEPS / Z_ROD_PITCH)
+
+/*
+#define XY_BELT_PITCH 2
+#define XY_GEAR_TEETH 20
+
+#define Z_ROD_PITCH 0.8
+
+// NEMA17 with 16 microsteps
+#define STEPS_NEMA17 200
+#define MICROS_NEMA17 16
+
+// PG with 50:1 ratio, 16 microsteps
+#define STEPS_PG50 48
+#define MICROS_PG50 16
+
+// A typical Wade's Extruder. Gregstruder: 51/11 or 43/10
+#define LG_GEAR_WADE 39
+#define SM_GEAR_WADE 11
+
+// Diameter of the drive wheel or hobbed bolt
+#define DRIVE_DIAM_WADE 7
+#define DRIVE_DIAM_MK7 10.56
+
+// calculated step unit values
+#define M_PI 3.14159265
+#define STEPS_PER_TURN_NEMA17 (STEPS_NEMA17 * MICROS_NEMA17)
+#define STEPS_PER_TURN_PG50 (STEPS_PG50 * MICROS_PG50)
+#define GEAR_RATIO_WADE (LG_GEAR_WADE/SM_GEAR_WADE)
+#define GEAR_RATIO_PG50 (50/1)
+#define DRIVE_CIRC_WADE (DRIVE_DIAM_WADE * M_PI)
+#define DRIVE_CIRC_MK7 (DRIVE_DIAM_MK7 * M_PI)
+
+// Some extruder steps-per-mm examples:
+
+// Classic Wade
+#define STEPS_PER_MM_WADE_39_11 (STEPS_PER_TURN_NEMA17 * GEAR_RATIO_WADE / DRIVE_CIRC_WADE) // = 515.91048
+
+// MK7 Direct Drive with 50:1 PG motor
+#define STEPS_PER_MM_MK7_50_1 (STEPS_PER_TURN_PG50 * GEAR_RATIO_PG50 / DRIVE_CIRC_MK7) // = 1157.49147
+
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {78.7402,78.7402,200.0*8/3,STEPS_PER_MM_MK7_50_1}  // Default for Prusa i3 with GT2 belts
+*/
+
+/**
+ * Default Axis Steps Per Unit (steps/mm)
+ * Override with M92
+ *
+ * Calculate XY_, Z_, and E_STEPS using your own calculated values.
+ */
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { XY_STEPS, XY_STEPS, Z_STEPS, ENG2_E_STEPS }  // White Fishbone: 39/12? 556.857 ; Black Fishbone: 694.494
+
+/**
+ * Default Max Feed Rate (mm/s)
+ * Override with M203
+ */
+#define DEFAULT_MAX_FEEDRATE { 500, 500, 2.25, 45 }
+
+/**
+ * Default Max Acceleration (change/s) change = mm/s
+ * Override with M201
+ */
+#define DEFAULT_MAX_ACCELERATION      {9000,9000,100,300}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
+
+#define DEFAULT_ACCELERATION          1500    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
+#define DEFAULT_RETRACT_ACCELERATION  1500   // X, Y, Z and E max acceleration in mm/s^2 for retracts
 #define DEFAULT_TRAVEL_ACCELERATION   3000    // X, Y, Z acceleration in mm/s^2 for travel (non printing) moves
 
-// The speed change that does not require acceleration (i.e. the software might assume it can be done instantaneously)
+/**
+ * Jerk Limit
+ *
+ * If a change in speed (mm/s) is needed, and the change is below this value,
+ *  no acceleration will be applied to the move.
+ * (i.e., The software might assume it can be done instantaneously.)
+ */
 #define DEFAULT_XYJERK                20.0    // (mm/sec)
 #define DEFAULT_ZJERK                 0.4     // (mm/sec)
-#define DEFAULT_EJERK                 5.0    // (mm/sec)
+#define DEFAULT_EJERK                 5.0     // (mm/sec)
 
 
 //=============================================================================
@@ -600,7 +749,11 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 
 // @section more
 
-// Custom M code points
+/**
+ * Custom M codes
+ * Currently adds M851 to set the z probe z offset with Auto Bed Leveling
+ */
+
 #define CUSTOM_M_CODES
 #ifdef CUSTOM_M_CODES
   #ifdef ENABLE_AUTO_BED_LEVELING
@@ -612,19 +765,21 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 
 // @section extras
 
-// EEPROM
-// The microcontroller can store settings in the EEPROM, e.g. max velocity...
-// M500 - stores parameters in EEPROM
-// M501 - reads parameters from EEPROM (if you need reset them after you changed them temporarily).
-// M502 - reverts to the default "factory settings".  You still need to store them in EEPROM afterwards if you want to.
-//define this to enable EEPROM support
-//#define EEPROM_SETTINGS
-
+/**
+ * EEPROM
+ *
+ * The microcontroller can store settings in the EEPROM, e.g. max velocity...
+ *  M500 - stores parameters in EEPROM
+ *  M501 - reads parameters from EEPROM (if you need reset them after you changed them temporarily).
+ *  M502 - reverts to the default "factory settings".  You still need to store them in EEPROM afterwards if you want to.
+ *
+ *  Define this to enable EEPROM support:
+ */
+#define EEPROM_SETTINGS
 #ifdef EEPROM_SETTINGS
   // To disable EEPROM Serial responses and decrease program space by ~1700 byte: comment this out:
-  #define EEPROM_CHITCHAT // please keep turned on if you can.
+  #define EEPROM_CHITCHAT // Please keep turned on if you can.
 #endif
-
 
 // @section temperature
 
@@ -652,9 +807,9 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
   //#define DISPLAY_CHARSET_HD44780_WESTERN
   //#define DISPLAY_CHARSET_HD44780_CYRILLIC
 
-//#define ULTRA_LCD  //general LCD support, also 16x2
+#define ULTRA_LCD  //general LCD support, also 16x2
 //#define DOGLCD  // Support for SPI LCD 128x64 (Controller ST7565R graphic Display Family)
-//#define SDSUPPORT // Enable SD Card Support in Hardware Console
+#define SDSUPPORT // Enable SD Card Support in Hardware Console
 //#define SDSLOW // Use slower SD transfer mode (not normally needed - uncomment if you're getting volume init error)
 //#define SD_CHECK_AND_RETRY // Use CRC checks and retries on the SD communication
 //#define ENCODER_PULSES_PER_STEP 1 // Increase if you have a high resolution encoder
@@ -685,7 +840,7 @@ const bool Z_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the logic
 
 // The GADGETS3D G3D LCD/SD Controller (blue PCB)
 // http://reprap.org/wiki/RAMPS_1.3/1.4_GADGETS3D_Shield_with_Panel
-//#define G3D_PANEL
+#define G3D_PANEL
 
 // The RepRapDiscount FULL GRAPHIC Smart Controller (quadratic white PCB)
 // http://reprap.org/wiki/RepRapDiscount_Full_Graphic_Smart_Controller

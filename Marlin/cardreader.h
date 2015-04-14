@@ -38,6 +38,15 @@ public:
   void updir();
   void setroot();
 
+  #ifdef SDCARD_SORT_ALPHA
+    void presort();
+    void getfilename_sorted(const uint16_t nr);
+    #if SORT_ONOFF
+      FORCE_INLINE void setSortOn(bool b) { sort_alpha = b; }
+      FORCE_INLINE void setSortFolders(int i) { sort_folders = i; }
+      //FORCE_INLINE void setSortReverse(bool b) { sort_reverse = b; }
+    #endif
+  #endif
 
   FORCE_INLINE bool isFileOpen() { return file.isOpen(); }
   FORCE_INLINE bool eof() { return sdpos >= filesize; }
@@ -53,6 +62,33 @@ public:
 private:
   SdFile root, *curDir, workDir, workDirParents[MAX_DIR_DEPTH];
   uint16_t workDirDepth;
+  #ifdef SDCARD_SORT_ALPHA
+    uint16_t sort_count;
+    #if SORT_ONOFF
+      bool sort_alpha;
+      int sort_folders;
+      //bool sort_reverse;
+    #endif
+    #if SORT_USES_RAM
+      uint8_t *sort_order;
+      #if SORT_USES_MORE_RAM
+        char **sortshort;
+        char **sortnames;
+      // #elif SORT_USES_MALLOC == false
+      //   char sortshort[SORT_LIMIT][FILENAME_LENGTH];
+      //   char sortnames[SORT_LIMIT][LONG_FILENAME_LENGTH];
+      #endif
+    #else
+      uint8_t sort_order[SORT_LIMIT];
+    #endif
+    #if (FOLDER_SORTING || SORT_ONOFF) && SORT_USES_RAM && SORT_USES_MORE_RAM
+      #if SORT_USES_MALLOC
+        uint8_t *isDir;
+      #else
+        uint8_t isDir[(SORT_LIMIT+7)>>3];
+      #endif
+    #endif
+  #endif
   Sd2Card card;
   SdVolume volume;
   SdFile file;
@@ -71,6 +107,10 @@ private:
   uint16_t nrFiles; //counter for the files in the current directory and recycled as position counter for getting the nrFiles'th name in the directory.
   char* diveDirName;
   void lsDive(const char *prepend, SdFile parent, const char * const match=NULL);
+
+  #ifdef SDCARD_SORT_ALPHA
+    void flush_presort();
+  #endif
 };
 
 extern CardReader card;

@@ -1,3 +1,13 @@
+/**
+ * Configuration_adv.h
+ *
+ * Advanced settings.
+ * Only change these if you know exactly what you're doing.
+ * Some of these settings can damage your printer if improperly set!
+ *
+ * Basic settings can be found in Configuration.h
+ *
+ */
 #ifndef CONFIGURATION_ADV_H
 #define CONFIGURATION_ADV_H
 
@@ -76,7 +86,7 @@
 // When first starting the main fan, run it at full speed for the
 // given number of milliseconds.  This gets the fan spinning reliably
 // before setting a PWM value. (Does not work with software PWM for fan on Sanguinololu)
-//#define FAN_KICKSTART_TIME 100
+#define FAN_KICKSTART_TIME 1000
 
 // @section extruder
 
@@ -193,7 +203,7 @@
 #define Y_HOME_BUMP_MM 5
 #define Z_HOME_BUMP_MM 2
 #define HOMING_BUMP_DIVISOR {2, 2, 4}  // Re-Bump Speed Divisor (Divides the Homing Feedrate)
-//#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
+#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
 
 // @section machine
 
@@ -273,16 +283,31 @@
   // be commented out otherwise
   #define SDCARDDETECTINVERTED
 
-  #define SD_FINISHED_STEPPERRELEASE true  //if sd support and the file is finished: disable steppers?
-  #define SD_FINISHED_RELEASECOMMAND "M84 X Y Z E" // You might want to keep the z enabled so your bed stays in place.
+  // Disable steppers when the file is done printing
+  #define SD_FINISHED_STEPPERRELEASE true
+
+  // Command to send. You may want to keep Z enabled so your bed stays in place.
+  #define SD_FINISHED_RELEASECOMMAND "M84 X Y Z E"
 
   #define SDCARD_RATHERRECENTFIRST  //reverse file order of sd card menu display. Its sorted practically after the file system block order.
   // if a file is deleted, it frees a block. hence, the order is not purely chronological. To still have auto0.g accessible, there is again the option to do that.
   // using:
   //#define MENU_ADDAUTOSTART
 
+  // Sort SD file listings in ASCII order.
+  #define SDCARD_SORT_ALPHA
+
+  // SD Card Sorting options
+  #ifdef SDCARD_SORT_ALPHA
+    #define SORT_USES_RAM true        // Buffer while sorting, else re-read from SD
+    #define SORT_USES_MORE_RAM false  // Always keep the directory in RAM
+    #define SORT_ONOFF false          // Allow turning sorting on/off with LCD and M-code
+    #define SORT_LIMIT 256            // Maximum number of sorted items
+    #define FOLDER_SORTING -1         // -1=above  0=none  1=below
+  #endif
+
   // Show a progress bar on HD44780 LCDs for SD printing
-  //#define LCD_PROGRESS_BAR
+  #define LCD_PROGRESS_BAR
 
   #ifdef LCD_PROGRESS_BAR
     // Amount of time (ms) to show the bar
