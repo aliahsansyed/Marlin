@@ -8,6 +8,9 @@
 #ifdef SDSUPPORT
 
 CardReader::CardReader() {
+  #ifdef SDCARD_SORT_FOLDERS
+    sort_count = 0;
+  #endif
   filesize = 0;
   sdpos = 0;
   sdprinting = false;
@@ -154,6 +157,9 @@ void CardReader::setroot() {
   }*/
   workDir = root;
   curDir = &workDir;
+  #ifdef SDCARD_SORT_FOLDERS
+    presort();
+  #endif
 }
 
 void CardReader::release() {
@@ -164,6 +170,9 @@ void CardReader::release() {
 void CardReader::startFileprint() {
   if (cardOK) {
     sdprinting = true;
+    #ifdef SDCARD_SORT_FOLDERS
+      flush_presort();
+    #endif
   }
 }
 
@@ -356,6 +365,9 @@ void CardReader::removeFile(char* name) {
     SERIAL_PROTOCOLPGM("File deleted:");
     SERIAL_PROTOCOLLN(fname);
     sdpos = 0;
+    #ifdef SDCARD_SORT_FOLDERS
+      presort();
+    #endif
   }
   else {
     SERIAL_PROTOCOLPGM("Deletion failed, File: ");
@@ -482,6 +494,9 @@ void CardReader::chdir(const char * relpath) {
       workDirParents[0] = *parent;
     }
     workDir = newfile;
+    #ifdef SDCARD_SORT_FOLDERS
+      presort();
+    #endif
   }
 }
 
@@ -491,8 +506,75 @@ void CardReader::updir() {
     workDir = workDirParents[0];
     for (uint16_t d = 0; d < workDirDepth; d++)
       workDirParents[d] = workDirParents[d+1];
+    #ifdef SDCARD_SORT_FOLDERS
+      presort();
+    #endif
   }
 }
+
+#ifdef SDCARD_SORT_FOLDERS
+
+/**
+ * Get the name of a file in the current directory by sort-index
+ */
+void CardReader::getfilename_sorted(const uint16_t nr) {
+  getfilename(nr < sort_count ? sort_order[nr] : nr);
+}
+
+/**
+ * Read all the files and produce a sort key
+ *
+ * We can do this in 3 ways...
+ *  - Minimal RAM: Read two filenames at a time sorting along...
+ *  - Some RAM: Buffer the directory just for this sort
+ *  - Most RAM: Buffer the directory and return filenames from RAM
+ */
+void CardReader::presort()
+{
+  flush_presort();
+
+  uint16_t fileCnt = getnrfilenames();
+  if (fileCnt > 0) {
+
+    if (fileCnt > SORT_LIMIT) fileCnt = SORT_LIMIT;
+
+    char name1[LONG_FILENAME_LENGTH+1]; // on the stack
+
+    if (fileCnt > 1) {
+
+      // Init sort order. If using RAM then read all filenames now.
+      for (uint16_t i = 0; i < fileCnt; i++) sort_order[i] = i;
+
+      // Bubble Sort
+      for (uint16_t i = fileCnt; --i;) {
+        bool cmp, didSwap = false;
+        for (uint16_t j = 0; j < i; ++j) {
+          uint16_t s1 = j, s2 = j + 1, o1 = sort_order[s1], o2 = sort_order[s2];
+          getfilename(o1); // update filenameIsDir
+          bool dir1 = filenameIsDir;
+          getfilename(o2); // update filenameIsDir
+          if ((dir1 != filenameIsDir) ? (FOLDER_SORT_ORDER > 0 ? dir1 : !dir1) : false) {
+            sort_order[s1] = o2;
+            sort_order[s2] = o1;
+            didSwap = true;
+          }
+        }
+        if (!didSwap) break;
+      }
+    }
+    else {
+      sort_order[0] = 0;
+    }
+
+    sort_count = fileCnt;
+  }
+}
+
+void CardReader::flush_presort() {
+  sort_count = 0;
+}
+
+#endif // SDCARD_SORT_FOLDERS
 
 void CardReader::printingHasFinished() {
   st_synchronize();
@@ -511,6 +593,9 @@ void CardReader::printingHasFinished() {
       enqueuecommands_P(PSTR(SD_FINISHED_RELEASECOMMAND));
     }
     autotempShutdown();
+    #ifdef SDCARD_SORT_FOLDERS
+      presort();
+    #endif
   }
 }
 

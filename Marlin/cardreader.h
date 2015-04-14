@@ -38,6 +38,10 @@ public:
   void updir();
   void setroot();
 
+  #ifdef SDCARD_SORT_FOLDERS
+    void presort();
+    void getfilename_sorted(const uint16_t nr);
+  #endif
 
   FORCE_INLINE bool isFileOpen() { return file.isOpen(); }
   FORCE_INLINE bool eof() { return sdpos >= filesize; }
@@ -53,6 +57,10 @@ public:
 private:
   SdFile root, *curDir, workDir, workDirParents[MAX_DIR_DEPTH];
   uint16_t workDirDepth;
+  #ifdef SDCARD_SORT_FOLDERS
+    uint16_t sort_count;
+    uint8_t sort_order[SORT_LIMIT];
+  #endif
   Sd2Card card;
   SdVolume volume;
   SdFile file;
@@ -71,6 +79,10 @@ private:
   uint16_t nrFiles; //counter for the files in the current directory and recycled as position counter for getting the nrFiles'th name in the directory.
   char* diveDirName;
   void lsDive(const char *prepend, SdFile parent, const char * const match=NULL);
+
+  #ifdef SDCARD_SORT_FOLDERS
+    void flush_presort();
+  #endif
 };
 
 extern CardReader card;
