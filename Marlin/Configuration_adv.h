@@ -281,6 +281,18 @@
   // using:
   //#define MENU_ADDAUTOSTART
 
+  // Sort SD file listings in ASCII order.
+  //#define SDCARD_SORT_ALPHA
+
+  // SD Card Sorting options
+  #ifdef SDCARD_SORT_ALPHA
+    #define SORT_USES_RAM true        // Buffer while sorting, else re-read from SD
+    #define SORT_USES_MORE_RAM false  // Always keep the directory in RAM
+    #define SORT_ONOFF false          // Allow turning sorting on/off with LCD and M-code
+    #define SORT_LIMIT 256            // Maximum number of sorted items
+    #define FOLDER_SORTING -1         // -1=above  0=none  1=below
+  #endif
+
   // Show a progress bar on HD44780 LCDs for SD printing
   //#define LCD_PROGRESS_BAR
 

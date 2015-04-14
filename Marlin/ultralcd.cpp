@@ -369,6 +369,10 @@ static void lcd_sdcard_stop() {
   autotempShutdown();
   cancel_heatup = true;
   lcd_setstatus(MSG_PRINT_ABORTED, true);
+
+  #ifdef SDCARD_SORT_ALPHA
+    card.presort();
+  #endif
 }
 
 /* Menu implementation */
@@ -1016,12 +1020,18 @@ void lcd_sdcard_menu() {
 
   for (uint16_t i = 0; i < fileCnt; i++) {
     if (_menuItemNr == _lineNr) {
-      card.getfilename(
-        #ifdef SDCARD_RATHERRECENTFIRST
-          fileCnt-1 -
-        #endif
-        i
-      );
+      #if defined(SDCARD_RATHERRECENTFIRST) && !defined(SDCARD_SORT_ALPHA)
+        int nr = fileCnt-1-i;
+      #else
+        int nr = i;
+      #endif
+
+      #ifdef SDCARD_SORT_ALPHA
+        card.getfilename_sorted(nr);
+      #else
+        card.getfilename(nr);
+      #endif
+
       if (card.filenameIsDir)
         MENU_ITEM(sddirectory, MSG_CARD_MENU, card.filename, card.longFilename);
       else
