@@ -1045,6 +1045,9 @@ static void axis_is_at_home(AxisEnum axis) {
     }
   #else
     current_position[axis] = base_home_pos(axis) + home_offset[axis];
+    #if defined(ENABLE_AUTO_BED_LEVELING) && Z_HOME_DIR < 0
+      if (axis == Z_AXIS) current_position[Z_AXIS] += zprobe_zoffset;
+    #endif
     min_pos[axis] = base_min_pos(axis) + home_offset[axis];
     max_pos[axis] = base_max_pos(axis) + home_offset[axis];
   #endif
@@ -2163,15 +2166,11 @@ inline void gcode_G28() {
             line_to_destination();
             st_synchronize();
 
-            // Set current X, Y is the Z_SAFE_HOMING_POINT minus PROBE_OFFSET_FROM_EXTRUDER
+            // Set current XY to the Z_SAFE_HOMING_POINT minus PROBE_OFFSET_FROM_EXTRUDER
             current_position[X_AXIS] = destination[X_AXIS];
             current_position[Y_AXIS] = destination[Y_AXIS];
 
-            // Home the Z axis
             HOMEAXIS(Z);
-            #ifdef DEBUG_LEVELING
-              print_xyz("> home_all_axis > final", current_position);
-            #endif
           }
 
           else if (homeZ) { // Don't need to Home Z twice
@@ -2206,11 +2205,7 @@ inline void gcode_G28() {
                 line_to_destination();
                 st_synchronize();
 
-                // Home the Z axis
                 HOMEAXIS(Z);
-                #ifdef DEBUG_LEVELING
-                  print_xyz("> homeZ > final", current_position);
-                #endif
               }
               else {
                 LCD_MESSAGEPGM(MSG_ZPROBE_OUT);
@@ -2236,6 +2231,10 @@ inline void gcode_G28() {
 
         #endif // !Z_SAFE_HOMING
 
+        #ifdef DEBUG_LEVELING
+          print_xyz("> (home_all_axis || homeZ) > final", current_position);
+        #endif
+
       } // home_all_axis || homeZ
 
     #endif // Z_HOME_DIR < 0
@@ -2247,16 +2246,6 @@ inline void gcode_G28() {
         print_xyz("Set Z", current_position);
       #endif
     }
-
-    #if defined(ENABLE_AUTO_BED_LEVELING) && Z_HOME_DIR < 0
-      if (home_all_axis || homeZ) {
-        current_position[Z_AXIS] += zprobe_zoffset;  // Add Z_Probe offset (the distance is negative)
-        #ifdef DEBUG_LEVELING
-          SERIAL_ECHOPAIR("> (home_all_axis || homeZ) > Add zprobe_zoffset:", zprobe_zoffset);
-          print_xyz("> current_position", current_position);
-        #endif
-      }
-    #endif
 
     sync_plan_position();
 
