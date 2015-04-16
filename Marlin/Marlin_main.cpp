@@ -1045,11 +1045,11 @@ static void axis_is_at_home(AxisEnum axis) {
     }
   #else
     current_position[axis] = base_home_pos(axis) + home_offset[axis];
-    #if defined(ENABLE_AUTO_BED_LEVELING) && Z_HOME_DIR < 0
-      if (axis == Z_AXIS) current_position[Z_AXIS] += zprobe_zoffset;
-    #endif
     min_pos[axis] = base_min_pos(axis) + home_offset[axis];
     max_pos[axis] = base_max_pos(axis) + home_offset[axis];
+  #endif
+  #if defined(ENABLE_AUTO_BED_LEVELING) && Z_HOME_DIR < 0
+    if (axis == Z_AXIS) current_position[Z_AXIS] += zprobe_zoffset;
   #endif
   #ifdef DEBUG_LEVELING
     SERIAL_ECHOPAIR("axis_is_at_home ", (unsigned long)axis);
