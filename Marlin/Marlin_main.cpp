@@ -1612,6 +1612,10 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
 #define HOMEAXIS(LETTER) homeaxis(LETTER##_AXIS)
 
 static void homeaxis(AxisEnum axis) {
+  #ifdef DEBUG_LEVELING
+    SERIAL_ECHOPAIR(">>> home_axis(", (unsigned long)axis);
+    SERIAL_EOL;
+  #endif
   #define HOMEAXIS_DO(LETTER) \
     ((LETTER##_MIN_PIN > -1 && LETTER##_HOME_DIR==-1) || (LETTER##_MAX_PIN > -1 && LETTER##_HOME_DIR==1))
 
@@ -1699,19 +1703,22 @@ static void homeaxis(AxisEnum axis) {
       if (endstop_adj[axis] * axis_home_dir < 0) {
         sync_plan_position();
         destination[axis] = endstop_adj[axis];
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPAIR("> endstop_adj = ", endstop_adj[axis]);
+          print_xyz(" > destination", destination);
+        #endif
         line_to_destination();
         st_synchronize();
       }
+      #ifdef DEBUG_LEVELING
+        else {
+          SERIAL_ECHOPAIR("> endstop_adj * axis_home_dir = ", endstop_adj[axis] * axis_home_dir);
+        }
+      #endif
     #endif
 
     // Set the axis position to its home position (plus home offsets)
     axis_is_at_home(axis);
-
-    #ifdef DEBUG_LEVELING
-      SERIAL_ECHOPAIR("home_axis with axis=", (unsigned long)axis);
-      SERIAL_EOL;
-      print_xyz("home_axis > current_position", current_position);
-    #endif
 
     destination[axis] = current_position[axis];
     feedrate = 0.0;
@@ -1722,7 +1729,7 @@ static void homeaxis(AxisEnum axis) {
     #ifdef SERVO_ENDSTOPS
       if (servo_endstops[axis] > -1) {
         #ifdef DEBUG_LEVELING
-          SERIAL_ECHOLNPGM("home_axis > SERVO_ENDSTOPS > Stow with write()");
+          SERIAL_ECHOLNPGM("> SERVO_ENDSTOPS > Stow with write()");
         #endif
         servo[servo_endstops[axis]].write(servo_endstop_angles[axis * 2 + 1]);
       }
@@ -1731,13 +1738,18 @@ static void homeaxis(AxisEnum axis) {
     #if SERVO_LEVELING && !defined(Z_PROBE_SLED)
       if (axis == Z_AXIS) {
         #ifdef DEBUG_LEVELING
-          SERIAL_ECHOLNPGM("home_axis(Z_AXIS) > SERVO_LEVELING > stow_z_probe");
+          SERIAL_ECHOLNPGM("> SERVO_LEVELING > stow_z_probe");
         #endif
         stow_z_probe();
       }
     #endif
 
   }
+
+  #ifdef DEBUG_LEVELING
+    SERIAL_ECHOPAIR("<<< home_axis(", (unsigned long)axis);
+    SERIAL_EOL;
+  #endif
 }
 
 #ifdef FWRETRACT
