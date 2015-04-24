@@ -1673,6 +1673,23 @@ static void homeaxis(AxisEnum axis) {
     line_to_destination();
     st_synchronize();
 
+    #ifdef DEBUG_LEVELING
+      print_xyz("> TRIGGER ENDSTOP > current_position", current_position);
+    #endif
+
+    //lrp
+    current_position[axis] =
+        #if SERVO_LEVELING && !defined(Z_PROBE_SLED)
+          (axis == Z_AXIS) ? -zprobe_zoffset * Z_HOME_DIR :
+        #endif
+      0;
+    sync_plan_position();
+    //lrp
+
+    #ifdef DEBUG_LEVELING
+      print_xyz("> AFTER sync_plan_position > SET current_position", current_position);
+    #endif
+
     #ifdef Z_DUAL_ENDSTOPS
       if (axis == Z_AXIS) {
         float adj = fabs(z_endstop_adj);
