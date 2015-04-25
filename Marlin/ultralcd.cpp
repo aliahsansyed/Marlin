@@ -1557,7 +1557,7 @@ void lcd_buzz(long duration, uint16_t freq) {
       tone(BEEPER, freq, duration);
       delay(duration);
     #elif defined(LCD_USE_I2C_BUZZER)
-      lcd.buzz(duration,freq);
+      lcd.buzz(duration, freq);
     #else
       delay(duration);
     #endif
