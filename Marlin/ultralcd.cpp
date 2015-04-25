@@ -267,28 +267,28 @@ static void lcd_status_screen() {
   #ifdef LCD_PROGRESS_BAR
     millis_t ms = millis();
     #ifndef PROGRESS_MSG_ONCE
-      if (ms > progressBarTick + PROGRESS_BAR_MSG_TIME + PROGRESS_BAR_BAR_TIME) {
-        progressBarTick = ms;
+      if (ms > progress_bar_ms + PROGRESS_BAR_MSG_TIME + PROGRESS_BAR_BAR_TIME) {
+        progress_bar_ms = ms;
       }
     #endif
     #if PROGRESS_MSG_EXPIRE > 0
       // Handle message expire
-      if (expireStatusMillis > 0) {
+      if (expire_status_ms > 0) {
         if (card.isFileOpen()) {
           // Expire the message when printing is active
           if (IS_SD_PRINTING) {
             // Expire the message when printing is active
-            if (ms >= expireStatusMillis) {
+            if (ms >= expire_status_ms) {
               lcd_status_message[0] = '\0';
-              expireStatusMillis = 0;
+              expire_status_ms = 0;
             }
           }
           else {
-            expireStatusMillis += LCD_UPDATE_INTERVAL;
+            expire_status_ms += LCD_UPDATE_INTERVAL;
           }
         }
         else {
-          expireStatusMillis = 0;
+          expire_status_ms = 0;
         }
       }
     #endif
@@ -1402,9 +1402,9 @@ void lcd_ignore_click(bool b) {
 
 void lcd_finishstatus(bool persist=false) {
   #ifdef LCD_PROGRESS_BAR
-    progressBarTick = millis();
+    progress_bar_ms = millis();
     #if PROGRESS_MSG_EXPIRE > 0
-      expireStatusMillis = persist ? 0 : progressBarTick + PROGRESS_MSG_EXPIRE;
+      expire_status_ms = persist ? 0 : progress_bar_ms + PROGRESS_MSG_EXPIRE;
     #endif
   #endif
   lcdDrawUpdate = 2;
@@ -1415,7 +1415,7 @@ void lcd_finishstatus(bool persist=false) {
 }
 
 #if defined(LCD_PROGRESS_BAR) && PROGRESS_MSG_EXPIRE > 0
-  void dontExpireStatus() { expireStatusMillis = 0; }
+  void dontExpireStatus() { expire_status_ms = 0; }
 #endif
 
 void set_utf_strlen(char *s, uint8_t n) {
@@ -1427,6 +1427,8 @@ void set_utf_strlen(char *s, uint8_t n) {
   while (j++ < n) s[i++] = ' ';
   s[i] = 0;
 }
+
+bool lcd_hasstatus() { return (lcd_status_message[0] != '\0'); }
 
 void lcd_setstatus(const char* message, bool persist) {
   if (lcd_status_message_level > 0) return;
