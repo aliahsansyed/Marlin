@@ -4051,11 +4051,23 @@ inline void gcode_M206() {
    * M666: Set delta endstop adjustment
    */
   inline void gcode_M666() {
+    #ifdef DEBUG_LEVELING
+      SERIAL_ECHOLNPGM(">>> gcode_M666");
+    #endif
     for (int8_t i = X_AXIS; i <= Z_AXIS; i++) {
       if (code_seen(axis_codes[i])) {
         endstop_adj[i] = code_value();
+        #ifdef DEBUG_LEVELING
+          SERIAL_ECHOPGM("endstop_adj[");
+          SERIAL_ECHO(axis_codes[i]);
+          SERIAL_ECHOPAIR("] = ", endstop_adj[i]);
+          SERIAL_EOL;
+        #endif
       }
     }
+    #ifdef DEBUG_LEVELING
+      SERIAL_ECHOLNPGM("<<< gcode_M666");
+    #endif
   }
 #elif defined(Z_DUAL_ENDSTOPS) // !DELTA && defined(Z_DUAL_ENDSTOPS)
   /**
