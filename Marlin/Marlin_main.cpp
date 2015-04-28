@@ -60,7 +60,7 @@
 #endif
 
 #if NUM_SERVOS > 0
-  #include "servo.h"
+  #include "Servo.h"
 #endif
 
 #if HAS_DIGIPOTSS
@@ -1546,10 +1546,14 @@ static void homeaxis(AxisEnum axis) {
     current_position[axis] = 0;
     sync_plan_position();
 
+    enable_endstops(false); // Disable endstops while moving away
+
     // Move away from the endstop by the axis HOME_BUMP_MM
     destination[axis] = -home_bump_mm(axis) * axis_home_dir;
     line_to_destination();
     st_synchronize();
+
+    enable_endstops(true); // Enable endstops for next homing move
 
     // Slow down the feedrate for the next move
     set_homing_bump_feedrate(axis);
@@ -1587,15 +1591,18 @@ static void homeaxis(AxisEnum axis) {
     #ifdef DELTA
       // retrace by the amount specified in endstop_adj
       if (endstop_adj[axis] * axis_home_dir < 0) {
+        enable_endstops(false); // Disable endstops while moving away
         sync_plan_position();
         destination[axis] = endstop_adj[axis];
         line_to_destination();
         st_synchronize();
+        enable_endstops(true); // Enable endstops for next homing move
       }
     #endif
 
     // Set the axis position to its home position (plus home offsets)
     axis_is_at_home(axis);
+    sync_plan_position();
 
     destination[axis] = current_position[axis];
     feedrate = 0.0;
@@ -1926,6 +1933,11 @@ inline void gcode_G28() {
 
     #endif // QUICK_HOME
 
+    #ifdef HOME_Y_BEFORE_X
+      // Home Y
+      if (home_all_axis || homeY) HOMEAXIS(Y);
+    #endif
+
     // Home X
     if (home_all_axis || homeX) {
       #ifdef DUAL_X_CARRIAGE
@@ -1945,8 +1957,10 @@ inline void gcode_G28() {
       #endif
     }
 
-    // Home Y
-    if (home_all_axis || homeY) HOMEAXIS(Y);
+    #ifndef HOME_Y_BEFORE_X
+      // Home Y
+      if (home_all_axis || homeY) HOMEAXIS(Y);
+    #endif
 
     // Home Z last if homing towards the bed
     #if Z_HOME_DIR < 0
