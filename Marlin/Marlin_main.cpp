@@ -1511,7 +1511,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
     float measured_z = current_position[Z_AXIS];
 
     #if Z_RAISE_BETWEEN_PROBINGS > 0
-      if (retract_action == ProbeStay) {
+      if (probe_action == ProbeStay) {
         #ifdef DEBUG_LEVELING
           SERIAL_ECHOPAIR("Raise Z (between) by ", (float)Z_RAISE_BETWEEN_PROBINGS);
           SERIAL_EOL;
