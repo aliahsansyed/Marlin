@@ -4664,15 +4664,6 @@ inline void gcode_M400() { st_synchronize(); }
     }
   #endif
 
-  #ifdef SERVO_ENDSTOPS
-    void raise_z_for_servo() {
-      float zpos = current_position[Z_AXIS], z_dest = Z_RAISE_BEFORE_HOMING;
-      if (!axis_known_position[Z_AXIS]) z_dest += zpos;
-      if (zpos < z_dest)
-        do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_dest); // also updates current_position
-    }
-  #endif
-
   /**
    * M401: Engage Z Servo endstop if available
    */
@@ -4693,7 +4684,7 @@ inline void gcode_M400() { st_synchronize(); }
     stow_z_probe();
   }
 
-#endif
+#endif // ENABLE_AUTO_BED_LEVELING && (SERVO_ENDSTOPS || Z_PROBE_ALLEN_KEY) && !Z_PROBE_SLED
 
 #ifdef FILAMENT_SENSOR
 
