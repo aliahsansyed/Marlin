@@ -559,9 +559,9 @@ void servo_init() {
 
   // Set position of Servo Endstops that are defined
   #ifdef SERVO_ENDSTOPS
-  for (int i = 0; i < 3; i++)
-    if (servo_endstops[i] >= 0)
-      servo[servo_endstops[i]].write(servo_endstop_angles[i * 2 + 1]);
+    for (int i = 0; i < 3; i++)
+      if (servo_endstops[i] >= 0)
+        servo[servo_endstops[i]].write(servo_endstop_angles[i * 2 + 1]);
   #endif
 
   #if SERVO_LEVELING
@@ -1405,9 +1405,7 @@ inline void set_destination_to_current() { memcpy(destination, current_position,
         #if SERVO_LEVELING
           servo[servo_endstops[Z_AXIS]].attach(0);
         #endif
-
         servo[servo_endstops[Z_AXIS]].write(servo_endstop_angles[Z_AXIS * 2 + 1]);
-
         #if SERVO_LEVELING
           delay(PROBE_SERVO_DEACTIVATION_DELAY);
           servo[servo_endstops[Z_AXIS]].detach();
@@ -1689,18 +1687,13 @@ static void homeaxis(AxisEnum axis) {
       print_xyz("> TRIGGER ENDSTOP > current_position", current_position);
     #endif
 
-    //lrp
-    current_position[axis] =
-        #if SERVO_LEVELING && !defined(Z_PROBE_SLED)
-          (axis == Z_AXIS) ? -zprobe_zoffset * Z_HOME_DIR :
-        #endif
-      0;
-    sync_plan_position();
-    //lrp
+    axis_is_at_home(axis); // Set axis position to home plus offsets
 
     #ifdef DEBUG_LEVELING
-      print_xyz("> AFTER sync_plan_position > SET current_position", current_position);
+      print_xyz("> AFTER axis_is_at_home > current_position", current_position);
     #endif
+
+    sync_plan_position();
 
     #ifdef Z_DUAL_ENDSTOPS
       if (axis == Z_AXIS) {
@@ -1748,8 +1741,7 @@ static void homeaxis(AxisEnum axis) {
       #endif
     #endif
 
-    // Set the axis position to its home position (plus home offsets)
-    axis_is_at_home(axis);
+    axis_is_at_home(axis); // Set axis position to home plus offsets
     sync_plan_position();
 
     destination[axis] = current_position[axis];
@@ -2847,8 +2839,7 @@ inline void gcode_G28() {
       feedrate = homing_feedrate[Z_AXIS];
 
       run_z_probe();
-      SERIAL_PROTOCOLPGM("Bed");
-      SERIAL_PROTOCOLPGM(" X: ");
+      SERIAL_PROTOCOLPGM("Bed X: ");
       SERIAL_PROTOCOL(current_position[X_AXIS] + 0.0001);
       SERIAL_PROTOCOLPGM(" Y: ");
       SERIAL_PROTOCOL(current_position[Y_AXIS] + 0.0001);
@@ -5645,14 +5636,14 @@ void process_commands() {
         gcode_M400();
         break;
 
-      #if defined(ENABLE_AUTO_BED_LEVELING) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_ALLEN_KEY)) && not defined(Z_PROBE_SLED)
+      #if defined(ENABLE_AUTO_BED_LEVELING) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_ALLEN_KEY)) && !defined(Z_PROBE_SLED)
         case 401:
           gcode_M401();
           break;
         case 402:
           gcode_M402();
           break;
-      #endif
+      #endif // ENABLE_AUTO_BED_LEVELING && (SERVO_ENDSTOPS || Z_PROBE_ALLEN_KEY) && !Z_PROBE_SLED
 
       #ifdef FILAMENT_SENSOR
         case 404:  //M404 Enter the nominal filament width (3mm, 1.75mm ) N<3.0> or display nominal filament width
